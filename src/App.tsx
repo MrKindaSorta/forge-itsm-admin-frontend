@@ -5,6 +5,7 @@ import { Layout } from './components/Layout';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { AdminUsersPage } from './pages/AdminUsersPage';
+import { ContactPage } from './pages/ContactPage';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -36,6 +37,7 @@ function App() {
           >
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="admin-users" element={<AdminUsersPage />} />
+            <Route path="contact" element={<ContactPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
-import { LayoutDashboard, Users, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, Mail, LogOut } from 'lucide-react';
 
 export const Layout: React.FC = () => {
   const { admin, logout } = useAuth();
@@ -10,6 +10,7 @@ export const Layout: React.FC = () => {
   const navigation = [
     { name: 'Tenants', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Admin Users', href: '/admin-users', icon: Users },
+    { name: 'Contact', href: '/contact', icon: Mail },
   ];
 
   const isActive = (href: string) => location.pathname === href;

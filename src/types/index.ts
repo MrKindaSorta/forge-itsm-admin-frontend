@@ -40,3 +40,15 @@ export interface ApiResponse<T> {
   data?: T;
   error?: string;
 }
+
+export interface ContactSubmission {
+  id: number;
+  name: string;
+  email: string;
+  company?: string;
+  message: string;
+  status: 'new' | 'read' | 'archived';
+  ip_address?: string;
+  created_at: string;
+  read_at?: string;
+}
