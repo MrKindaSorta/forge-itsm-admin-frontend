@@ -36,7 +36,7 @@ export const DashboardPage: React.FC = () => {
       if (planFilter !== 'all') params.append('plan', planFilter);
 
       const response = await api.get(`/api/admin/tenants?${params.toString()}`);
-      setTenants(response.data);
+      setTenants(response.data.tenants || []);
       setIsLoading(false);
     } catch (error) {
       console.error('Failed to fetch tenants:', error);
@@ -47,7 +47,7 @@ export const DashboardPage: React.FC = () => {
   const fetchLogs = async () => {
     try {
       const response = await api.get('/api/admin/provision-logs');
-      setLogs(response.data);
+      setLogs(response.data.logs || []);
     } catch (error) {
       console.error('Failed to fetch logs:', error);
     }
