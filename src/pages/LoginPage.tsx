@@ -3,22 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { Button } from '../components/Button';
 
-declare global {
-  interface Window {
-    turnstile: {
-      render: (element: string | HTMLElement, options: {
-        sitekey: string;
-        callback: (token: string) => void;
-      }) => void;
-      reset: () => void;
-    };
-  }
-}
-
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [turnstileToken, setTurnstileToken] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login, isAuthenticated } = useAuth();
@@ -30,30 +17,6 @@ export const LoginPage: React.FC = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  useEffect(() => {
-    // Load Turnstile script
-    const script = document.createElement('script');
-    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
-    script.async = true;
-    script.defer = true;
-    document.body.appendChild(script);
-
-    script.onload = () => {
-      if (window.turnstile) {
-        window.turnstile.render('#turnstile-widget', {
-          sitekey: '0x4AAAAAAAzCfoOxvI1HHE3A',
-          callback: (token: string) => {
-            setTurnstileToken(token);
-          },
-        });
-      }
-    };
-
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -63,22 +26,13 @@ export const LoginPage: React.FC = () => {
       return;
     }
 
-    if (!turnstileToken) {
-      setError('Please complete the security check');
-      return;
-    }
-
     setIsLoading(true);
 
     try {
-      await login(email, password, turnstileToken);
+      await login(email, password, '');
       navigate('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
-      if (window.turnstile) {
-        window.turnstile.reset();
-      }
-      setTurnstileToken('');
     } finally {
       setIsLoading(false);
     }
@@ -133,15 +87,11 @@ export const LoginPage: React.FC = () => {
               />
             </div>
 
-            {/* Turnstile Widget */}
-            <div id="turnstile-widget" className="flex justify-center"></div>
-
             <Button
               type="submit"
               variant="primary"
               className="w-full"
               isLoading={isLoading}
-              disabled={!turnstileToken}
             >
               {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
