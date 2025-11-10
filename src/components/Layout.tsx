@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
-import { LayoutDashboard, Users, Mail, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, Mail, LogOut, BarChart3 } from 'lucide-react';
 
 export const Layout: React.FC = () => {
   const { admin, logout } = useAuth();
@@ -9,6 +9,7 @@ export const Layout: React.FC = () => {
 
   const navigation = [
     { name: 'Tenants', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Analytics', href: '/analytics', icon: BarChart3 },
     { name: 'Admin Users', href: '/admin-users', icon: Users },
     { name: 'Contact', href: '/contact', icon: Mail },
   ];

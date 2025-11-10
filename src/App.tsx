@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './lib/auth';
 import { Layout } from './components/Layout';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { AnalyticsPage } from './pages/AnalyticsPage';
 import { AdminUsersPage } from './pages/AdminUsersPage';
 import { ContactPage } from './pages/ContactPage';
 
@@ -36,6 +37,7 @@ function App() {
             }
           >
             <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="admin-users" element={<AdminUsersPage />} />
             <Route path="contact" element={<ContactPage />} />
           </Route>
