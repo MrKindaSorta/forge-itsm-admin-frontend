@@ -51,9 +51,24 @@ interface SessionsResponse {
   };
 }
 
+interface PageVisit {
+  page_name: string;
+  unique_visitors: number;
+  total_pageviews: number;
+}
+
+interface PageVisitsData {
+  pages: PageVisit[];
+  totals: {
+    unique_visitors: number;
+    total_pageviews: number;
+  };
+}
+
 export const AnalyticsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'sessions'>('overview');
   const [funnelData, setFunnelData] = useState<FunnelData | null>(null);
+  const [pageVisitsData, setPageVisitsData] = useState<PageVisitsData | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 50, total: 0, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
@@ -64,6 +79,7 @@ export const AnalyticsPage: React.FC = () => {
   useEffect(() => {
     if (activeTab === 'overview') {
       fetchAnalytics();
+      fetchPageVisits();
     } else {
       fetchSessions();
     }
@@ -80,6 +96,16 @@ export const AnalyticsPage: React.FC = () => {
       setError('Failed to load analytics data');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchPageVisits = async () => {
+    try {
+      const response = await api.get<PageVisitsData>(`/api/admin/analytics/page-visits?days=${dateRange}`);
+      setPageVisitsData(response.data);
+    } catch (err) {
+      console.error('Failed to fetch page visits:', err);
+      // Don't set error state here, let funnel data load anyway
     }
   };
 
@@ -433,6 +459,90 @@ export const AnalyticsPage: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* Website Traffic Section */}
+          {pageVisitsData && (
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Website Traffic</h2>
+
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <p className="text-sm font-medium text-purple-600 uppercase tracking-wider">Unique Visitors</p>
+                  <p className="text-2xl font-bold text-purple-900 mt-1">
+                    {pageVisitsData.totals.unique_visitors.toLocaleString()}
+                  </p>
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm font-medium text-blue-600 uppercase tracking-wider">Total Pageviews</p>
+                  <p className="text-2xl font-bold text-blue-900 mt-1">
+                    {pageVisitsData.totals.total_pageviews.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+
+              {/* Page Visit Table */}
+              {pageVisitsData.pages.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Page Name
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Unique Visitors
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Total Pageviews
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Avg. Views per Visitor
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {pageVisitsData.pages.map((page, index) => (
+                        <tr key={index}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {page.page_name}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            {page.unique_visitors.toLocaleString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            {page.total_pageviews.toLocaleString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            {(page.total_pageviews / (page.unique_visitors || 1)).toFixed(1)}
+                          </td>
+                        </tr>
+                      ))}
+                      {/* Totals Row */}
+                      <tr className="bg-gray-50 font-semibold">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          TOTAL
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {pageVisitsData.totals.unique_visitors.toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {pageVisitsData.totals.total_pageviews.toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {(pageVisitsData.totals.total_pageviews / (pageVisitsData.totals.unique_visitors || 1)).toFixed(1)}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  No page visits tracked yet. Data will appear here once visitors browse the marketing website.
+                </div>
+              )}
+            </div>
+          )}
         </>
       )}
 
