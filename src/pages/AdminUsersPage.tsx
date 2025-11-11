@@ -97,82 +97,82 @@ export const AdminUsersPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Admin Users</h1>
-        <Button onClick={() => setCreateModal(true)}>
-          <Plus size={18} className="mr-2" />
-          Create Admin User
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <h1 className="text-xl font-bold text-primary">Admin Users</h1>
+        <Button size="sm" onClick={() => setCreateModal(true)}>
+          <Plus size={16} className="mr-2" />
+          Create Admin
         </Button>
       </div>
 
       {/* Users Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      <div className="bg-card rounded-lg shadow-sm overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-800">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                 ID
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                 Name
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                 Email
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                 Created
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                 Last Login
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-card divide-y divide-gray-200 dark:divide-gray-700">
             {isLoading ? (
               <tr>
-                <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                <td colSpan={6} className="px-4 py-4 text-center text-secondary">
                   Loading...
                 </td>
               </tr>
             ) : users.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                <td colSpan={6} className="px-4 py-4 text-center text-secondary">
                   No admin users found
                 </td>
               </tr>
             ) : (
               users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.id}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-primary">{user.id}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <div className="text-sm font-medium text-primary">{user.name}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{user.email}</div>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <div className="text-sm text-secondary">{user.email}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-secondary">
                     {formatDate(user.created_at)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-secondary">
                     {user.last_login ? formatDate(user.last_login) : 'Never'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-3">
+                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
+                    <div className="flex space-x-2 justify-end">
                       <button
                         onClick={() => openEditModal(user)}
-                        className="text-blue-600 hover:text-blue-900"
+                        className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-1"
                         title="Edit"
                       >
                         <Pencil size={18} />
                       </button>
                       <button
                         onClick={() => setDeleteModal({ isOpen: true, user })}
-                        className="text-red-600 hover:text-red-900"
+                        className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-1"
                         title="Delete"
                       >
                         <Trash2 size={18} />

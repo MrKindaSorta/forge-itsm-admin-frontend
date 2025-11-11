@@ -39,26 +39,26 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 to-purple-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="bg-white rounded-lg shadow-2xl p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 to-purple-900 dark:from-purple-900 dark:to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full">
+        <div className="bg-card rounded-lg shadow-2xl p-6 sm:p-8">
           {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Forge ITSM Admin</h1>
-            <p className="mt-2 text-sm text-gray-600">Sign in to access the admin panel</p>
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-primary">Forge ITSM Admin</h1>
+            <p className="mt-2 text-sm text-secondary">Sign in to access the admin panel</p>
           </div>
 
           {/* Error Message */}
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
               {error}
             </div>
           )}
 
           {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium text-secondary mb-1">
                 Email
               </label>
               <input
@@ -66,14 +66,14 @@ export const LoginPage: React.FC = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
+                className="w-full px-3 py-2 border border-default rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition bg-card text-primary"
                 placeholder="admin@example.com"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="block text-sm font-medium text-secondary mb-1">
                 Password
               </label>
               <input
@@ -81,7 +81,7 @@ export const LoginPage: React.FC = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
+                className="w-full px-3 py-2 border border-default rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition bg-card text-primary"
                 placeholder="••••••••"
                 required
               />

@@ -5,6 +5,7 @@ import type { Tenant, ProvisioningLog } from '../types';
 import { Badge } from '../components/Badge';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
+import { ResponsiveTable } from '../components/ResponsiveTable';
 import { formatDate } from '../lib/utils';
 
 export const DashboardPage: React.FC = () => {
@@ -125,27 +126,27 @@ export const DashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Tenant Management</h1>
-        <Button variant="secondary" onClick={() => setShowLogs(!showLogs)}>
-          {showLogs ? 'Hide' : 'Show'} Provisioning Logs
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+        <h1 className="text-xl font-bold text-primary">Tenant Management</h1>
+        <Button variant="secondary" size="sm" onClick={() => setShowLogs(!showLogs)}>
+          {showLogs ? 'Hide' : 'Show'} Logs
         </Button>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4 space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="bg-card rounded-lg shadow-sm p-3 space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+          <div className="relative sm:col-span-2 lg:col-span-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary" size={16} />
             <input
               type="text"
-              placeholder="Search by subdomain, company, or email..."
+              placeholder="Search subdomain, company..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-default rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none bg-card text-primary"
             />
           </div>
 
@@ -153,7 +154,7 @@ export const DashboardPage: React.FC = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+            className="px-3 py-2 text-sm border border-default rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none bg-card text-primary"
           >
             <option value="all">All Statuses</option>
             <option value="active">Active</option>
@@ -166,7 +167,7 @@ export const DashboardPage: React.FC = () => {
           <select
             value={planFilter}
             onChange={(e) => setPlanFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+            className="px-3 py-2 text-sm border border-default rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none bg-card text-primary"
           >
             <option value="all">All Plans</option>
             <option value="starter">Starter</option>
@@ -177,148 +178,155 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* Tenants Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Subdomain
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Company
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Email
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Plan
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Created
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {isLoading ? (
-              <tr>
-                <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
-                  Loading...
-                </td>
-              </tr>
-            ) : tenants.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
-                  No tenants found
-                </td>
-              </tr>
-            ) : (
-              tenants.map((tenant) => (
-                <tr key={tenant.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{tenant.subdomain}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{tenant.company_name}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{tenant.admin_email}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <Badge variant={getPlanBadgeVariant(tenant.plan)}>
-                      {tenant.plan}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <Badge variant={getStatusBadgeVariant(tenant.status)}>
-                      {tenant.status}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatDate(tenant.created_at)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-2">
-                      {tenant.status === 'deleted' ? (
+      <div className="bg-card rounded-lg shadow-sm overflow-hidden">
+        {isLoading ? (
+          <div className="py-12 text-center text-secondary">Loading...</div>
+        ) : (
+          <ResponsiveTable
+            data={tenants}
+            keyExtractor={(tenant) => tenant.id}
+            emptyMessage="No tenants found"
+            columns={[
+              {
+                key: 'subdomain',
+                label: 'Subdomain',
+                render: (tenant) => (
+                  <div className="font-medium">{tenant.subdomain}</div>
+                ),
+              },
+              {
+                key: 'company',
+                label: 'Company',
+                render: (tenant) => <div>{tenant.company_name}</div>,
+              },
+              {
+                key: 'email',
+                label: 'Email',
+                mobileLabel: 'Contact',
+                render: (tenant) => <div className="text-secondary">{tenant.admin_email}</div>,
+              },
+              {
+                key: 'plan',
+                label: 'Plan',
+                render: (tenant) => (
+                  <Badge variant={getPlanBadgeVariant(tenant.plan)}>
+                    {tenant.plan}
+                  </Badge>
+                ),
+              },
+              {
+                key: 'status',
+                label: 'Status',
+                render: (tenant) => (
+                  <Badge variant={getStatusBadgeVariant(tenant.status)}>
+                    {tenant.status}
+                  </Badge>
+                ),
+              },
+              {
+                key: 'created',
+                label: 'Created',
+                mobileLabel: 'Date',
+                render: (tenant) => <div className="text-secondary">{formatDate(tenant.created_at)}</div>,
+              },
+              {
+                key: 'actions',
+                label: 'Actions',
+                render: (tenant) => (
+                  <div className="flex space-x-2 justify-end">
+                    {tenant.status === 'deleted' ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRestoreTenant(tenant.subdomain);
+                        }}
+                        className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 p-1"
+                        title="Restore"
+                      >
+                        <RotateCcw size={18} />
+                      </button>
+                    ) : (
+                      <>
                         <button
-                          onClick={() => handleRestoreTenant(tenant.subdomain)}
-                          className="text-green-600 hover:text-green-900"
-                          title="Restore"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteModal({ isOpen: true, tenant, type: 'soft' });
+                          }}
+                          className="text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 dark:hover:text-yellow-300 p-1"
+                          title="Soft Delete"
                         >
-                          <RotateCcw size={18} />
+                          <Trash2 size={18} />
                         </button>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => setDeleteModal({ isOpen: true, tenant, type: 'soft' })}
-                            className="text-yellow-600 hover:text-yellow-900"
-                            title="Soft Delete"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                          <button
-                            onClick={() => setDeleteModal({ isOpen: true, tenant, type: 'hard' })}
-                            className="text-red-600 hover:text-red-900"
-                            title="Hard Delete"
-                          >
-                            <Database size={18} />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteModal({ isOpen: true, tenant, type: 'hard' });
+                          }}
+                          className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-1"
+                          title="Hard Delete"
+                        >
+                          <Database size={18} />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                ),
+              },
+            ]}
+          />
+        )}
       </div>
 
       {/* Provisioning Logs */}
       {showLogs && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Provisioning Logs</h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Subdomain</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Step</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Message</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {logs.map((log) => (
-                  <tr key={log.id} className={log.status === 'error' ? 'bg-red-50' : ''}>
-                    <td className="px-4 py-2 text-sm text-gray-900">{log.subdomain}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{log.step}</td>
-                    <td className="px-4 py-2">
-                      <Badge
-                        variant={
-                          log.status === 'success'
-                            ? 'green'
-                            : log.status === 'error'
-                            ? 'red'
-                            : 'yellow'
-                        }
-                      >
-                        {log.status}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{log.message || '-'}</td>
-                    <td className="px-4 py-2 text-sm text-gray-500">{formatDate(log.created_at)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div className="bg-card rounded-lg shadow-sm p-4">
+          <h2 className="text-base font-semibold text-primary mb-3">Provisioning Logs</h2>
+          <ResponsiveTable
+            data={logs}
+            keyExtractor={(log) => log.id}
+            emptyMessage="No logs available"
+            columns={[
+              {
+                key: 'subdomain',
+                label: 'Subdomain',
+                render: (log) => <div className="font-medium">{log.subdomain}</div>,
+              },
+              {
+                key: 'step',
+                label: 'Step',
+                render: (log) => <div className="text-secondary">{log.step}</div>,
+              },
+              {
+                key: 'status',
+                label: 'Status',
+                render: (log) => (
+                  <Badge
+                    variant={
+                      log.status === 'success'
+                        ? 'green'
+                        : log.status === 'error'
+                        ? 'red'
+                        : 'yellow'
+                    }
+                  >
+                    {log.status}
+                  </Badge>
+                ),
+              },
+              {
+                key: 'message',
+                label: 'Message',
+                hideOnMobile: true,
+                render: (log) => <div className="text-secondary truncate max-w-xs">{log.message || '-'}</div>,
+              },
+              {
+                key: 'time',
+                label: 'Time',
+                mobileLabel: 'Date',
+                render: (log) => <div className="text-secondary text-xs">{formatDate(log.created_at)}</div>,
+              },
+            ]}
+          />
         </div>
       )}
 
@@ -332,7 +340,7 @@ export const DashboardPage: React.FC = () => {
         title={deleteModal.type === 'soft' ? 'Soft Delete Tenant' : 'Hard Delete Tenant'}
       >
         <div className="space-y-4">
-          <p className="text-gray-700">
+          <p className="text-secondary">
             {deleteModal.type === 'soft'
               ? `Are you sure you want to soft delete "${deleteModal.tenant?.subdomain}"? The tenant will be marked as deleted but data will be preserved.`
               : `Are you sure you want to PERMANENTLY delete "${deleteModal.tenant?.subdomain}"? This will remove the database and all files. This action cannot be undone.`}
@@ -340,22 +348,23 @@ export const DashboardPage: React.FC = () => {
 
           {deleteModal.type === 'hard' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Type <span className="font-mono bg-gray-100 px-1">{deleteModal.tenant?.subdomain}</span> to confirm:
+              <label className="block text-sm font-medium text-primary mb-1">
+                Type <span className="font-mono bg-gray-100 dark:bg-gray-800 px-1 rounded">{deleteModal.tenant?.subdomain}</span> to confirm:
               </label>
               <input
                 type="text"
                 value={confirmText}
                 onChange={(e) => setConfirmText(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none"
+                className="w-full px-3 py-2 border border-default rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none bg-card text-primary"
                 placeholder={deleteModal.tenant?.subdomain}
               />
             </div>
           )}
 
-          <div className="flex justify-end space-x-3">
+          <div className="flex justify-end space-x-2">
             <Button
               variant="secondary"
+              size="sm"
               onClick={() => {
                 setDeleteModal({ isOpen: false, tenant: null, type: 'soft' });
                 setConfirmText('');
@@ -365,6 +374,7 @@ export const DashboardPage: React.FC = () => {
             </Button>
             <Button
               variant="danger"
+              size="sm"
               onClick={handleDeleteTenant}
               disabled={deleteModal.type === 'hard' && confirmText !== deleteModal.tenant?.subdomain}
             >

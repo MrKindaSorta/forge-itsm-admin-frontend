@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './lib/auth';
+import { ThemeProvider } from './lib/theme';
 import { Layout } from './components/Layout';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -24,27 +25,29 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<LoginPage />} />
-          <Route
-            path="/"
-            element={
-              <PrivateRoute>
-                <Layout />
-              </PrivateRoute>
-            }
-          >
-            <Route path="dashboard" element={<DashboardPage />} />
-            <Route path="analytics" element={<AnalyticsPage />} />
-            <Route path="admin-users" element={<AdminUsersPage />} />
-            <Route path="contact" element={<ContactPage />} />
-          </Route>
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<LoginPage />} />
+            <Route
+              path="/"
+              element={
+                <PrivateRoute>
+                  <Layout />
+                </PrivateRoute>
+              }
+            >
+              <Route path="dashboard" element={<DashboardPage />} />
+              <Route path="analytics" element={<AnalyticsPage />} />
+              <Route path="admin-users" element={<AdminUsersPage />} />
+              <Route path="contact" element={<ContactPage />} />
+            </Route>
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
