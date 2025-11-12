@@ -5,6 +5,7 @@ import api from '../lib/api';
 import { Button } from '../components/Button';
 import { ExpandableSection } from '../components/ExpandableSection';
 import { FunnelWidget } from '../components/FunnelWidget';
+import { formatDate } from '../lib/utils';
 
 interface FunnelStage {
   name: string;
@@ -144,10 +145,6 @@ export const AnalyticsPage: React.FC = () => {
       console.error('Failed to delete session:', err);
       alert('Failed to delete session. Please try again.');
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
   };
 
   const truncateSessionId = (sessionId: string) => {

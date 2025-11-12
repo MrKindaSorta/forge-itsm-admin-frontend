@@ -5,19 +5,43 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatDate(dateString: string): string {
-  const date = new Date(dateString);
+export function formatDate(dateString: string | number): string {
+  let date: Date;
+
+  // Check if input is Unix timestamp (seconds)
+  if (typeof dateString === 'number' || /^\d+$/.test(String(dateString))) {
+    const timestamp = typeof dateString === 'string' ? parseInt(dateString, 10) : dateString;
+    // Convert seconds to milliseconds (SQLite unixepoch() returns seconds)
+    date = new Date(timestamp * 1000);
+  } else {
+    // Assume ISO string format
+    date = new Date(dateString);
+  }
+
   return new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: 'UTC',
+    timeZoneName: 'short',
   }).format(date);
 }
 
-export function formatRelativeTime(dateString: string): string {
-  const date = new Date(dateString);
+export function formatRelativeTime(dateString: string | number): string {
+  let date: Date;
+
+  // Check if input is Unix timestamp (seconds)
+  if (typeof dateString === 'number' || /^\d+$/.test(String(dateString))) {
+    const timestamp = typeof dateString === 'string' ? parseInt(dateString, 10) : dateString;
+    // Convert seconds to milliseconds
+    date = new Date(timestamp * 1000);
+  } else {
+    // Assume ISO string format
+    date = new Date(dateString);
+  }
+
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
