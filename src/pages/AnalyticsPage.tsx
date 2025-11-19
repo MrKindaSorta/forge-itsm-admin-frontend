@@ -173,7 +173,7 @@ export const AnalyticsPage: React.FC = () => {
 
   const fetchAbandonedUsers = async () => {
     try {
-      const response = await api.get<AbandonedUsersData>('/api/admin/analytics/abandoned-users?minStage=step3_completed');
+      const response = await api.get<AbandonedUsersData>(`/api/admin/analytics/abandoned-users?minStage=step3_completed&days=${dateRange}`);
       setAbandonedUsers(response.data);
     } catch (err) {
       console.error('Failed to fetch abandoned users:', err);
@@ -184,7 +184,7 @@ export const AnalyticsPage: React.FC = () => {
     try {
       setIsLoading(true);
       const response = await api.get<SessionsResponse>(
-        `/api/admin/analytics/sessions?page=${pagination.page}&limit=${pagination.limit}`
+        `/api/admin/analytics/sessions?page=${pagination.page}&limit=${pagination.limit}&days=${dateRange}`
       );
       setSessions(response.data.sessions);
       setPagination(response.data.pagination);
@@ -224,6 +224,32 @@ export const AnalyticsPage: React.FC = () => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
+  };
+
+  // Benchmark targets for each timing stage (in seconds)
+  const timingBenchmarks = {
+    toStep1: 60,      // Should start form within 1 minute
+    inStep1: 45,      // Plan selection should be quick (30-60s)
+    inStep2: 60,      // Account details form (45-90s)
+    inStep3: 90,      // Company info + subdomain (60-120s)
+    toStripe: 30,     // Redirect should be fast (15-45s)
+    provisioning: 90  // Database creation target (60-120s)
+  };
+
+  // Get performance color based on actual vs benchmark
+  const getPerformanceColor = (actual: number, benchmark: number): string => {
+    const ratio = actual / benchmark;
+    if (ratio <= 1) return 'text-green-600 dark:text-green-400';      // Fast (at or below target)
+    if (ratio <= 1.5) return 'text-yellow-600 dark:text-yellow-400';  // Acceptable (within 50%)
+    return 'text-red-600 dark:text-red-400';                           // Slow (over 50% slow)
+  };
+
+  // Get status badge based on performance
+  const getPerformanceBadge = (actual: number, benchmark: number): string => {
+    const ratio = actual / benchmark;
+    if (ratio <= 1) return '✓';
+    if (ratio <= 1.5) return '⚠';
+    return '✗';
   };
 
   if (isLoading && !funnelData && sessions.length === 0) {
@@ -387,6 +413,96 @@ export const AnalyticsPage: React.FC = () => {
             )}
           </div>
 
+          {/* Abandoned User Recovery Dashboard - Position #2 for high visibility */}
+          {abandonedUsers && abandonedUsers.stats.highIntent > 0 && (
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-400 dark:border-yellow-600 rounded-lg p-4">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <h3 className="text-base font-bold text-yellow-900 dark:text-yellow-100">
+                    ⚠️ {abandonedUsers.stats.highIntent} High-Intent Abandoned Signups
+                  </h3>
+                  <p className="text-sm text-yellow-800 dark:text-yellow-300 mt-1">
+                    These users completed Step 3 (company name + subdomain) but didn't finish payment. They're highly likely to convert with a reminder email!
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="bg-white dark:bg-gray-800 rounded p-3 text-center">
+                  <p className="text-xs text-secondary">High Intent</p>
+                  <p className="text-2xl font-bold text-primary">{abandonedUsers.stats.highIntent}</p>
+                </div>
+                <div className="bg-white dark:bg-gray-800 rounded p-3 text-center">
+                  <p className="text-xs text-secondary">With Email</p>
+                  <p className="text-2xl font-bold text-primary">{abandonedUsers.stats.withEmail}</p>
+                </div>
+                <div className="bg-white dark:bg-gray-800 rounded p-3 text-center">
+                  <p className="text-xs text-secondary">Est. Recovery Rate</p>
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                    ~{Math.round((abandonedUsers.stats.highIntent / Math.max(abandonedUsers.stats.totalAbandoned, 1)) * 30)}%
+                  </p>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded">
+                <table className="min-w-full text-sm">
+                  <thead className="bg-gray-50 dark:bg-gray-900">
+                    <tr className="border-b border-default">
+                      <th className="text-left py-2 px-3 font-medium text-secondary text-xs">Email</th>
+                      <th className="text-left py-2 px-3 font-medium text-secondary text-xs">Company</th>
+                      <th className="text-left py-2 px-3 font-medium text-secondary text-xs">Subdomain</th>
+                      <th className="text-left py-2 px-3 font-medium text-secondary text-xs">Plan</th>
+                      <th className="text-left py-2 px-3 font-medium text-secondary text-xs">Last Stage</th>
+                      <th className="text-left py-2 px-3 font-medium text-secondary text-xs">Hours Ago</th>
+                      <th className="text-left py-2 px-3 font-medium text-secondary text-xs">Source</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {abandonedUsers.users.slice(0, 10).map((user) => (
+                      <tr key={user.session_id} className="border-b border-default last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td className="py-2 px-3 text-xs text-primary font-medium">{user.email || '-'}</td>
+                        <td className="py-2 px-3 text-xs text-secondary">{user.company_name || '-'}</td>
+                        <td className="py-2 px-3 text-xs">
+                          <span className="font-mono text-purple-600 dark:text-purple-400">
+                            {user.subdomain || '-'}
+                          </span>
+                        </td>
+                        <td className="py-2 px-3 text-xs">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                            {user.selected_plan || 'None'}
+                          </span>
+                        </td>
+                        <td className="py-2 px-3 text-xs text-secondary">{user.current_stage.replace(/_/g, ' ')}</td>
+                        <td className="py-2 px-3 text-xs">
+                          <span className={`font-medium ${user.hours_since_update < 24 ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'}`}>
+                            {user.hours_since_update.toFixed(1)}h
+                          </span>
+                        </td>
+                        <td className="py-2 px-3 text-xs text-secondary">
+                          {user.first_page && user.first_button ? (
+                            <div className="max-w-32 truncate" title={`${user.first_page} - ${user.first_button}`}>
+                              {user.first_button}
+                            </div>
+                          ) : '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {abandonedUsers.users.length > 10 && (
+                <div className="mt-3 text-xs text-center text-secondary">
+                  Showing 10 of {abandonedUsers.users.length} abandoned users
+                </div>
+              )}
+
+              <div className="mt-3 p-2 bg-white dark:bg-gray-800 rounded text-xs text-secondary">
+                💡 <strong>Tip:</strong> Export this list for email retargeting campaigns. Focus on users abandoned within 24-48 hours for best results.
+              </div>
+            </div>
+          )}
+
           {/* Integrated Funnel Widget */}
           <FunnelWidget stages={funnelData.stages} />
 
@@ -399,28 +515,67 @@ export const AnalyticsPage: React.FC = () => {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-secondary">To Step 1 (Plan Selection)</span>
-                    <span className="font-medium text-primary">{formatDuration(timingData.averageTimes.toStep1)}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`font-medium ${getPerformanceColor(timingData.averageTimes.toStep1, timingBenchmarks.toStep1)}`}>
+                        {formatDuration(timingData.averageTimes.toStep1)}
+                      </span>
+                      <span className="text-xs">{getPerformanceBadge(timingData.averageTimes.toStep1, timingBenchmarks.toStep1)}</span>
+                      <span className="text-xs text-secondary">({formatDuration(timingBenchmarks.toStep1)})</span>
+                    </div>
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-secondary">In Step 1 (Selecting Plan)</span>
-                    <span className="font-medium text-primary">{formatDuration(timingData.averageTimes.inStep1)}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`font-medium ${getPerformanceColor(timingData.averageTimes.inStep1, timingBenchmarks.inStep1)}`}>
+                        {formatDuration(timingData.averageTimes.inStep1)}
+                      </span>
+                      <span className="text-xs">{getPerformanceBadge(timingData.averageTimes.inStep1, timingBenchmarks.inStep1)}</span>
+                      <span className="text-xs text-secondary">({formatDuration(timingBenchmarks.inStep1)})</span>
+                    </div>
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-secondary">In Step 2 (Account Details)</span>
-                    <span className="font-medium text-primary">{formatDuration(timingData.averageTimes.inStep2)}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`font-medium ${getPerformanceColor(timingData.averageTimes.inStep2, timingBenchmarks.inStep2)}`}>
+                        {formatDuration(timingData.averageTimes.inStep2)}
+                      </span>
+                      <span className="text-xs">{getPerformanceBadge(timingData.averageTimes.inStep2, timingBenchmarks.inStep2)}</span>
+                      <span className="text-xs text-secondary">({formatDuration(timingBenchmarks.inStep2)})</span>
+                    </div>
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-secondary">In Step 3 (Company Info)</span>
-                    <span className="font-medium text-primary">{formatDuration(timingData.averageTimes.inStep3)}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`font-medium ${getPerformanceColor(timingData.averageTimes.inStep3, timingBenchmarks.inStep3)}`}>
+                        {formatDuration(timingData.averageTimes.inStep3)}
+                      </span>
+                      <span className="text-xs">{getPerformanceBadge(timingData.averageTimes.inStep3, timingBenchmarks.inStep3)}</span>
+                      <span className="text-xs text-secondary">({formatDuration(timingBenchmarks.inStep3)})</span>
+                    </div>
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-secondary">To Stripe Checkout</span>
-                    <span className="font-medium text-primary">{formatDuration(timingData.averageTimes.toStripe)}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`font-medium ${getPerformanceColor(timingData.averageTimes.toStripe, timingBenchmarks.toStripe)}`}>
+                        {formatDuration(timingData.averageTimes.toStripe)}
+                      </span>
+                      <span className="text-xs">{getPerformanceBadge(timingData.averageTimes.toStripe, timingBenchmarks.toStripe)}</span>
+                      <span className="text-xs text-secondary">({formatDuration(timingBenchmarks.toStripe)})</span>
+                    </div>
                   </div>
                   <div className="flex items-center justify-between text-xs border-t border-default pt-2 mt-2">
                     <span className="text-secondary font-medium">Provisioning Time</span>
-                    <span className="font-bold text-primary">{formatDuration(timingData.averageTimes.provisioning)}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`font-bold ${getPerformanceColor(timingData.averageTimes.provisioning, timingBenchmarks.provisioning)}`}>
+                        {formatDuration(timingData.averageTimes.provisioning)}
+                      </span>
+                      <span className="text-xs">{getPerformanceBadge(timingData.averageTimes.provisioning, timingBenchmarks.provisioning)}</span>
+                      <span className="text-xs text-secondary">({formatDuration(timingBenchmarks.provisioning)})</span>
+                    </div>
                   </div>
+                </div>
+                <div className="mt-3 text-xs text-secondary">
+                  ✓ = At/below target  |  ⚠ = Within 50%  |  ✗ = Over 50% slow
                 </div>
               </div>
 
@@ -600,89 +755,6 @@ export const AnalyticsPage: React.FC = () => {
             </div>
           </ExpandableSection>
 
-          {/* Abandoned User Recovery Dashboard */}
-          {abandonedUsers && abandonedUsers.stats.highIntent > 0 && (
-            <ExpandableSection
-              title="High-Intent Abandoned Signups"
-              defaultExpanded={false}
-              badge={abandonedUsers.stats.highIntent}
-            >
-              <div className="mb-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded">
-                <p className="text-sm text-yellow-800 dark:text-yellow-300 mb-2">
-                  These users completed Step 3 (company name + subdomain) but didn't finish payment. They're highly likely to convert with a reminder email!
-                </p>
-                <div className="grid grid-cols-3 gap-3 text-center">
-                  <div>
-                    <p className="text-xs text-secondary">High Intent</p>
-                    <p className="text-lg font-bold text-primary">{abandonedUsers.stats.highIntent}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-secondary">With Email</p>
-                    <p className="text-lg font-bold text-primary">{abandonedUsers.stats.withEmail}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-secondary">Recovery Rate</p>
-                    <p className="text-lg font-bold text-green-600 dark:text-green-400">
-                      ~{Math.round((abandonedUsers.stats.highIntent / Math.max(abandonedUsers.stats.totalAbandoned, 1)) * 30)}%
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-default">
-                      <th className="text-left py-2 px-3 font-medium text-secondary text-xs">Email</th>
-                      <th className="text-left py-2 px-3 font-medium text-secondary text-xs">Company</th>
-                      <th className="text-left py-2 px-3 font-medium text-secondary text-xs">Subdomain</th>
-                      <th className="text-left py-2 px-3 font-medium text-secondary text-xs">Plan</th>
-                      <th className="text-left py-2 px-3 font-medium text-secondary text-xs">Last Stage</th>
-                      <th className="text-left py-2 px-3 font-medium text-secondary text-xs">Hours Ago</th>
-                      <th className="text-left py-2 px-3 font-medium text-secondary text-xs">Source</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {abandonedUsers.users.map((user) => (
-                      <tr key={user.session_id} className="border-b border-default last:border-0 hover:bg-elevated">
-                        <td className="py-2 px-3 text-xs text-primary font-medium">{user.email || '-'}</td>
-                        <td className="py-2 px-3 text-xs text-secondary">{user.company_name || '-'}</td>
-                        <td className="py-2 px-3 text-xs">
-                          <span className="font-mono text-purple-600 dark:text-purple-400">
-                            {user.subdomain || '-'}
-                          </span>
-                        </td>
-                        <td className="py-2 px-3 text-xs">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
-                            {user.selected_plan || 'None'}
-                          </span>
-                        </td>
-                        <td className="py-2 px-3 text-xs text-secondary">{user.current_stage.replace(/_/g, ' ')}</td>
-                        <td className="py-2 px-3 text-xs">
-                          <span className={`font-medium ${user.hours_since_update < 24 ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'}`}>
-                            {user.hours_since_update.toFixed(1)}h
-                          </span>
-                        </td>
-                        <td className="py-2 px-3 text-xs text-secondary">
-                          {user.first_page && user.first_button ? (
-                            <div className="max-w-32 truncate" title={`${user.first_page} - ${user.first_button}`}>
-                              {user.first_button}
-                            </div>
-                          ) : '-'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {abandonedUsers.users.length > 0 && (
-                <div className="mt-3 p-2 bg-gray-50 dark:bg-gray-800 rounded text-xs text-secondary">
-                  💡 <strong>Tip:</strong> Export this list for email retargeting campaigns. Focus on users abandoned within 24-48 hours for best results.
-                </div>
-              )}
-            </ExpandableSection>
-          )}
 
           {/* Expandable Sessions Preview */}
           <ExpandableSection
