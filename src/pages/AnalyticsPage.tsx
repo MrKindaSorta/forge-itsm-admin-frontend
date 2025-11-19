@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis } from 'recharts';
-import { TrendingUp, Users, MousePointerClick, AlertCircle, Clock, Trash2, Eye, Download, X, Copy, CheckCircle } from 'lucide-react';
+import { TrendingUp, Users, MousePointerClick, AlertCircle, Trash2, Eye, Download, X, Copy, CheckCircle } from 'lucide-react';
 import api from '../lib/api';
 import { Button } from '../components/Button';
 import { ExpandableSection } from '../components/ExpandableSection';
@@ -205,7 +205,6 @@ export const AnalyticsPage: React.FC = () => {
   const [previousFunnelData, setPreviousFunnelData] = useState<FunnelData | null>(null);
   const [pageVisitsData, setPageVisitsData] = useState<PageVisitsData | null>(null);
   const [timingData, setTimingData] = useState<TimingData | null>(null);
-  const [previousTimingData, setPreviousTimingData] = useState<TimingData | null>(null);
   const [abandonedUsers, setAbandonedUsers] = useState<AbandonedUsersData | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 50, total: 0, totalPages: 0 });
@@ -269,9 +268,6 @@ export const AnalyticsPage: React.FC = () => {
       // Fetch previous period for trends
       const response = await api.get(`/api/admin/analytics/funnel?days=${dateRange}`);
       setPreviousFunnelData(response.data);
-
-      const timingResponse = await api.get(`/api/admin/analytics/timing?days=${dateRange}`);
-      setPreviousTimingData(timingResponse.data);
     } catch (err) {
       console.error('Failed to fetch previous period data:', err);
     }

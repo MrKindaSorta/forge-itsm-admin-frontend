@@ -382,7 +382,7 @@ export function FunnelWidget({ stages, previousStages }: FunnelWidgetProps) {
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded bg-gradient-to-r from-red-500 to-red-400"></div>
-          <span>Needs Improvement (<40%)</span>
+          <span>Needs Improvement (&lt;40%)</span>
         </div>
       </div>
     </div>
