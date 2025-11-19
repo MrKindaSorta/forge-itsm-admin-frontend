@@ -1,4 +1,4 @@
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Info } from 'lucide-react';
 
 interface FunnelStage {
   name: string;
@@ -10,6 +10,22 @@ interface FunnelStage {
 interface FunnelWidgetProps {
   stages: FunnelStage[];
 }
+
+// Stage descriptions for user clarity
+const STAGE_DESCRIPTIONS: Record<string, string> = {
+  'Button Clicks': 'User clicked a "Get Started" or signup CTA button on the marketing website',
+  'Step 1 Started': 'User landed on the signup form and began the process',
+  'Step 1 Completed': 'User selected a pricing plan (Starter/Professional/Business)',
+  'Plan Selected': 'User selected a pricing plan (Starter/Professional/Business)',
+  'Step 2 Completed': 'User entered their name, email, and password',
+  'Account Created': 'User entered their name, email, and password',
+  'Step 3 Completed': 'User entered company name and chose their subdomain',
+  'Company Info': 'User entered company name and chose their subdomain',
+  'Account Setup': 'User completed account details and company information',
+  'Stripe Redirect': 'User was redirected to Stripe checkout page for payment',
+  'Stripe Checkout': 'User was sent to Stripe and completed payment/trial signup',
+  'Provisioned': 'System automatically created their database and ITSM instance',
+};
 
 // Consolidate 7 stages into 5 for cleaner display
 function consolidateStages(stages: FunnelStage[]): FunnelStage[] {
@@ -108,12 +124,22 @@ export function FunnelWidget({ stages }: FunnelWidgetProps) {
             <div key={stage.name}>
               {/* Stage row */}
               <div className="flex items-center justify-between py-2 px-1">
-                {/* Left side: Circle + Name */}
+                {/* Left side: Circle + Name + Info tooltip */}
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div className="w-3 h-3 rounded-full bg-primary-600 dark:bg-primary-500 flex-shrink-0" />
                   <span className="font-medium text-sm text-primary truncate">
                     {stage.name}
                   </span>
+                  {STAGE_DESCRIPTIONS[stage.name] && (
+                    <div className="group relative flex-shrink-0">
+                      <Info className="h-3.5 w-3.5 text-secondary hover:text-primary cursor-help" />
+                      <div className="absolute left-0 top-5 z-50 hidden group-hover:block w-64 p-2 bg-elevated border border-default rounded-lg shadow-lg">
+                        <p className="text-xs text-secondary leading-relaxed">
+                          {STAGE_DESCRIPTIONS[stage.name]}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Right side: Count + Percentage + Dropoff */}
