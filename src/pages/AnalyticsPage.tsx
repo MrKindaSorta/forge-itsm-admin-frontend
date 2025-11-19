@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { TrendingUp, Users, Eye, AlertCircle, Download, RefreshCw, Activity } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { TrendingUp, Eye, AlertCircle, Download, RefreshCw, Activity } from 'lucide-react';
 import api from '../lib/api';
 import { Button } from '../components/Button';
 import { FunnelWidget } from '../components/FunnelWidget';
-import { ErrorTrackingWidget, SignupError, ErrorStats } from '../components/ErrorTrackingWidget';
+import { ErrorTrackingWidget, type SignupError, type ErrorStats } from '../components/ErrorTrackingWidget';
 import { formatDate } from '../lib/utils';
 
 // Interfaces
