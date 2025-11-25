@@ -152,28 +152,24 @@ export const AnalyticsPage: React.FC = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 50, total: 0, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
-  const [dateRange, setDateRange] = useState(0); // Default to "Today"
+  const [dateRange, setDateRange] = useState(30); // Default to 30 days
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [error, setError] = useState('');
 
   // Error tracking state
   const [errorData, setErrorData] = useState<{ errors: SignupError[]; stats: ErrorStats } | null>(null);
 
-  // Date range options - 0 = Today
+  // Date range options
   const dateRangeOptions = [
-    { value: 0, label: 'Today' },
     { value: 7, label: '7 Days' },
     { value: 30, label: '30 Days' },
     { value: 90, label: '90 Days' },
   ];
 
-  // Build query params with timezone-aware date range
+  // Build query params with days parameter (backend expects ?days=X format)
   const buildDateParams = useCallback((additionalParams?: Record<string, string>): URLSearchParams => {
-    const { startDate, endDate } = getDateRangeForTimezone(dateRange);
     const params = new URLSearchParams({
-      startDate,
-      endDate,
-      timezone: getTimezoneName(),
+      days: String(dateRange === 0 ? 1 : dateRange), // Convert Today (0) to 1 day for backend
       ...additionalParams,
     });
     return params;
