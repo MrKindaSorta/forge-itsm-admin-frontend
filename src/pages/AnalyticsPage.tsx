@@ -161,15 +161,19 @@ export const AnalyticsPage: React.FC = () => {
 
   // Date range options
   const dateRangeOptions = [
+    { value: 0, label: 'Today' },
     { value: 7, label: '7 Days' },
     { value: 30, label: '30 Days' },
     { value: 90, label: '90 Days' },
   ];
 
-  // Build query params with days parameter (backend expects ?days=X format)
+  // Build query params with timezone-aware date range
   const buildDateParams = useCallback((additionalParams?: Record<string, string>): URLSearchParams => {
+    const { startDate, endDate } = getDateRangeForTimezone(dateRange);
     const params = new URLSearchParams({
-      days: String(dateRange === 0 ? 1 : dateRange), // Convert Today (0) to 1 day for backend
+      startDate,
+      endDate,
+      timezone: getTimezoneName(),
       ...additionalParams,
     });
     return params;
