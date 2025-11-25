@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { TrendingUp, Eye, AlertCircle, Download, RefreshCw, Activity } from 'lucide-react';
+import { TrendingUp, Eye, AlertCircle, Download, RefreshCw, Activity, Clock } from 'lucide-react';
 import api from '../lib/api';
 import { Button } from '../components/Button';
 import { FunnelWidget } from '../components/FunnelWidget';
 import { ErrorTrackingWidget, type SignupError, type ErrorStats } from '../components/ErrorTrackingWidget';
-import { formatDate } from '../lib/utils';
+import { formatDate, getDateRangeForTimezone, getTimezoneName } from '../lib/utils';
 
 // Interfaces
 interface FunnelStage {
@@ -152,18 +152,32 @@ export const AnalyticsPage: React.FC = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 50, total: 0, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
-  const [dateRange, setDateRange] = useState(30);
+  const [dateRange, setDateRange] = useState(0); // Default to "Today"
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [error, setError] = useState('');
 
   // Error tracking state
   const [errorData, setErrorData] = useState<{ errors: SignupError[]; stats: ErrorStats } | null>(null);
 
+  // Date range options - 0 = Today
   const dateRangeOptions = [
+    { value: 0, label: 'Today' },
     { value: 7, label: '7 Days' },
     { value: 30, label: '30 Days' },
     { value: 90, label: '90 Days' },
   ];
+
+  // Build query params with timezone-aware date range
+  const buildDateParams = useCallback((additionalParams?: Record<string, string>): URLSearchParams => {
+    const { startDate, endDate } = getDateRangeForTimezone(dateRange);
+    const params = new URLSearchParams({
+      startDate,
+      endDate,
+      timezone: getTimezoneName(),
+      ...additionalParams,
+    });
+    return params;
+  }, [dateRange]);
 
   useEffect(() => {
     if (activeTab === 'overview') {
@@ -181,7 +195,8 @@ export const AnalyticsPage: React.FC = () => {
   const fetchAnalytics = async () => {
     try {
       setIsLoading(true);
-      const response = await api.get(`/api/admin/analytics/funnel?days=${dateRange}`);
+      const params = buildDateParams();
+      const response = await api.get(`/api/admin/analytics/funnel?${params}`);
       setFunnelData(response.data);
       setLastUpdated(new Date());
       setError('');
@@ -195,7 +210,32 @@ export const AnalyticsPage: React.FC = () => {
 
   const fetchPreviousPeriodData = async () => {
     try {
-      const response = await api.get(`/api/admin/analytics/funnel?days=${dateRange}`);
+      // Get previous period (e.g., if today, get yesterday; if 7 days, get previous 7 days)
+      const daysForPrevious = dateRange === 0 ? 1 : dateRange;
+      const now = new Date();
+      
+      // Calculate previous period
+      const prevEndDate = new Date(now);
+      if (dateRange === 0) {
+        // Yesterday
+        prevEndDate.setDate(prevEndDate.getDate() - 1);
+        prevEndDate.setHours(23, 59, 59, 999);
+      } else {
+        prevEndDate.setDate(prevEndDate.getDate() - dateRange);
+        prevEndDate.setHours(23, 59, 59, 999);
+      }
+      
+      const prevStartDate = new Date(prevEndDate);
+      prevStartDate.setDate(prevStartDate.getDate() - daysForPrevious + 1);
+      prevStartDate.setHours(0, 0, 0, 0);
+      
+      const params = new URLSearchParams({
+        startDate: prevStartDate.toISOString(),
+        endDate: prevEndDate.toISOString(),
+        timezone: getTimezoneName(),
+      });
+      
+      const response = await api.get(`/api/admin/analytics/funnel?${params}`);
       setPreviousFunnelData(response.data);
     } catch (err) {
       console.error('Failed to fetch previous period data:', err);
@@ -204,7 +244,8 @@ export const AnalyticsPage: React.FC = () => {
 
   const fetchPageVisits = async () => {
     try {
-      const response = await api.get<PageVisitsData>(`/api/admin/analytics/page-visits?days=${dateRange}`);
+      const params = buildDateParams();
+      const response = await api.get<PageVisitsData>(`/api/admin/analytics/page-visits?${params}`);
       setPageVisitsData(response.data);
     } catch (err) {
       console.error('Failed to fetch page visits:', err);
@@ -213,7 +254,8 @@ export const AnalyticsPage: React.FC = () => {
 
   const fetchTimingData = async () => {
     try {
-      const response = await api.get<TimingData>(`/api/admin/analytics/timing?days=${dateRange}`);
+      const params = buildDateParams();
+      const response = await api.get<TimingData>(`/api/admin/analytics/timing?${params}`);
       setTimingData(response.data);
     } catch (err) {
       console.error('Failed to fetch timing data:', err);
@@ -222,7 +264,8 @@ export const AnalyticsPage: React.FC = () => {
 
   const fetchAbandonedUsers = async () => {
     try {
-      const response = await api.get<AbandonedUsersData>(`/api/admin/analytics/abandoned-users?minStage=step3_completed&days=${dateRange}`);
+      const params = buildDateParams({ minStage: 'step3_completed' });
+      const response = await api.get<AbandonedUsersData>(`/api/admin/analytics/abandoned-users?${params}`);
       setAbandonedUsers(response.data);
     } catch (err) {
       console.error('Failed to fetch abandoned users:', err);
@@ -231,7 +274,8 @@ export const AnalyticsPage: React.FC = () => {
 
   const fetchErrorData = async () => {
     try {
-      const response = await api.get(`/api/admin/analytics/signup-errors?days=${dateRange}`);
+      const params = buildDateParams();
+      const response = await api.get(`/api/admin/analytics/signup-errors?${params}`);
       setErrorData(response.data);
     } catch (err) {
       console.error('Failed to fetch error data:', err);
@@ -243,10 +287,9 @@ export const AnalyticsPage: React.FC = () => {
   const fetchSessions = useCallback(async () => {
     try {
       setIsLoading(true);
-      const params = new URLSearchParams({
+      const params = buildDateParams({
         page: String(pagination.page),
         limit: String(pagination.limit),
-        days: String(dateRange),
       });
 
       const response = await api.get<SessionsResponse>(`/api/admin/analytics/sessions?${params}`);
@@ -259,7 +302,7 @@ export const AnalyticsPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [pagination.page, pagination.limit, dateRange]);
+  }, [pagination.page, pagination.limit, buildDateParams]);
 
   const calculateTrend = useCallback((current: number, previous: number | undefined): { change: number; isPositive: boolean } => {
     if (!previous || previous === 0) return { change: 0, isPositive: current > 0 };
@@ -286,6 +329,23 @@ export const AnalyticsPage: React.FC = () => {
     if (seconds < 60) return 'just now';
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
     return formatDate(date.toISOString());
+  };
+
+  // Get friendly date range label for display
+  const getDateRangeLabel = (): string => {
+    const { startDate, endDate } = getDateRangeForTimezone(dateRange);
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    const formatShortDate = (d: Date) => d.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric' 
+    });
+    
+    if (dateRange === 0) {
+      return `Today (${formatShortDate(start)})`;
+    }
+    return `${formatShortDate(start)} - ${formatShortDate(end)}`;
   };
 
   const handleRefreshData = () => {
@@ -357,7 +417,7 @@ export const AnalyticsPage: React.FC = () => {
         </div>
 
         {activeTab === 'overview' && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {dateRangeOptions.map((option) => (
               <Button
                 key={option.value}
@@ -406,9 +466,14 @@ export const AnalyticsPage: React.FC = () => {
         </nav>
       </div>
 
-      {/* Data freshness */}
-      <div className="text-xs text-secondary">
-        Updated {getTimeAgo(lastUpdated)}
+      {/* Data freshness and timezone indicator */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-xs text-secondary">
+        <span>Updated {getTimeAgo(lastUpdated)}</span>
+        <span className="hidden sm:inline">•</span>
+        <span className="flex items-center gap-1">
+          <Clock className="h-3 w-3" />
+          {getDateRangeLabel()} ({getTimezoneName()})
+        </span>
       </div>
 
       {/* Overview Tab */}
@@ -475,7 +540,7 @@ export const AnalyticsPage: React.FC = () => {
                 <Button
                   size="sm"
                   variant="secondary"
-                  onClick={() => exportAsCSV(abandonedUsers.users, `abandoned-users-${dateRange}days.csv`)}
+                  onClick={() => exportAsCSV(abandonedUsers.users, `abandoned-users-${dateRange === 0 ? 'today' : dateRange + 'days'}.csv`)}
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Export CSV
@@ -611,16 +676,28 @@ export const AnalyticsPage: React.FC = () => {
       {/* Sessions Tab */}
       {activeTab === 'sessions' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <h2 className="text-xl font-bold text-primary">All Signup Sessions</h2>
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => exportAsCSV(sessions, `sessions-${dateRange}days.csv`)}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Export CSV
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              {dateRangeOptions.map((option) => (
+                <Button
+                  key={option.value}
+                  onClick={() => setDateRange(option.value)}
+                  variant={dateRange === option.value ? 'primary' : 'secondary'}
+                  size="sm"
+                >
+                  {option.label}
+                </Button>
+              ))}
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => exportAsCSV(sessions, `sessions-${dateRange === 0 ? 'today' : dateRange + 'days'}.csv`)}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
+              </Button>
+            </div>
           </div>
 
           {/* Sessions Table */}
