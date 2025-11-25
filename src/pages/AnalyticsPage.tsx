@@ -180,12 +180,13 @@ export const AnalyticsPage: React.FC = () => {
   }, [dateRange]);
 
   useEffect(() => {
+    console.log('[Analytics] useEffect triggered - activeTab:', activeTab, 'dateRange:', dateRange, 'page:', pagination.page);
     if (activeTab === 'overview') {
       fetchAnalytics();
       fetchPageVisits();
       fetchTimingData();
       fetchAbandonedUsers();
-      fetchPreviousPeriodData();
+      // TODO: fetchPreviousPeriodData() - Currently fetches same period, needs backend support for historical comparison
       fetchErrorData();
     } else {
       fetchSessions();
@@ -195,8 +196,10 @@ export const AnalyticsPage: React.FC = () => {
   const fetchAnalytics = async () => {
     try {
       setIsLoading(true);
+      console.log('[Analytics] Fetching funnel data with dateRange:', dateRange);
       const params = buildDateParams();
       const response = await api.get(`/api/admin/analytics/funnel?${params}`);
+      console.log('[Analytics] Funnel data received:', response.data);
       setFunnelData(response.data);
       setLastUpdated(new Date());
       setError('');
@@ -421,7 +424,10 @@ export const AnalyticsPage: React.FC = () => {
             {dateRangeOptions.map((option) => (
               <Button
                 key={option.value}
-                onClick={() => setDateRange(option.value)}
+                onClick={() => {
+                  console.log('[Analytics] Timeframe button clicked:', option.value);
+                  setDateRange(option.value);
+                }}
                 variant={dateRange === option.value ? 'primary' : 'secondary'}
                 size="sm"
               >
