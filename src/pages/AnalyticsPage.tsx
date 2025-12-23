@@ -165,10 +165,21 @@ export const AnalyticsPage: React.FC = () => {
     { value: 7, label: '7 Days' },
     { value: 30, label: '30 Days' },
     { value: 90, label: '90 Days' },
+    { value: -1, label: 'All Time' },
   ];
 
   // Build query params with timezone-aware date range
   const buildDateParams = useCallback((additionalParams?: Record<string, string>): URLSearchParams => {
+    // Handle "All Time" - don't send date filters
+    if (dateRange === -1) {
+      const params = new URLSearchParams({
+        timezone: getTimezoneName(),
+        ...additionalParams,
+      });
+      return params;
+    }
+
+    // Normal date range
     const { startDate, endDate } = getDateRangeForTimezone(dateRange);
     const params = new URLSearchParams({
       startDate,
