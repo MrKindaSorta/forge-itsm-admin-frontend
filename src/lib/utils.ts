@@ -26,14 +26,20 @@ export function getTimezoneName(): string {
  */
 export function getDateRangeForTimezone(days: number): { startDate: string; endDate: string } {
   const now = new Date();
-  
+
   // End of today in local timezone (23:59:59.999)
   const endDate = new Date(now);
   endDate.setHours(23, 59, 59, 999);
-  
+
   // Start date: beginning of day X days ago (00:00:00.000)
   const startDate = new Date(now);
-  if (days === 0) {
+  if (days === -1) {
+    // "All Time" - start from a very old date (e.g., 10 years ago)
+    // Note: buildDateParams() handles this by not sending date filters at all
+    // This is just for display purposes
+    startDate.setFullYear(startDate.getFullYear() - 10);
+    startDate.setHours(0, 0, 0, 0);
+  } else if (days === 0) {
     // "Today" - start of today
     startDate.setHours(0, 0, 0, 0);
   } else {
@@ -41,7 +47,7 @@ export function getDateRangeForTimezone(days: number): { startDate: string; endD
     startDate.setDate(startDate.getDate() - days + 1);
     startDate.setHours(0, 0, 0, 0);
   }
-  
+
   return {
     startDate: startDate.toISOString(),
     endDate: endDate.toISOString(),

@@ -224,10 +224,16 @@ export const AnalyticsPage: React.FC = () => {
 
   const fetchPreviousPeriodData = async () => {
     try {
+      // Skip previous period for "All Time" - no meaningful comparison
+      if (dateRange === -1) {
+        setPreviousFunnelData(null);
+        return;
+      }
+
       // Get previous period (e.g., if today, get yesterday; if 7 days, get previous 7 days)
       const daysForPrevious = dateRange === 0 ? 1 : dateRange;
       const now = new Date();
-      
+
       // Calculate previous period
       const prevEndDate = new Date(now);
       if (dateRange === 0) {
@@ -238,17 +244,17 @@ export const AnalyticsPage: React.FC = () => {
         prevEndDate.setDate(prevEndDate.getDate() - dateRange);
         prevEndDate.setHours(23, 59, 59, 999);
       }
-      
+
       const prevStartDate = new Date(prevEndDate);
       prevStartDate.setDate(prevStartDate.getDate() - daysForPrevious + 1);
       prevStartDate.setHours(0, 0, 0, 0);
-      
+
       const params = new URLSearchParams({
         startDate: prevStartDate.toISOString(),
         endDate: prevEndDate.toISOString(),
         timezone: getTimezoneName(),
       });
-      
+
       const response = await api.get(`/api/admin/analytics/funnel?${params}`);
       setPreviousFunnelData(response.data);
     } catch (err) {
@@ -347,15 +353,19 @@ export const AnalyticsPage: React.FC = () => {
 
   // Get friendly date range label for display
   const getDateRangeLabel = (): string => {
+    if (dateRange === -1) {
+      return 'All Time';
+    }
+
     const { startDate, endDate } = getDateRangeForTimezone(dateRange);
     const start = new Date(startDate);
     const end = new Date(endDate);
-    
-    const formatShortDate = (d: Date) => d.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric' 
+
+    const formatShortDate = (d: Date) => d.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
     });
-    
+
     if (dateRange === 0) {
       return `Today (${formatShortDate(start)})`;
     }
